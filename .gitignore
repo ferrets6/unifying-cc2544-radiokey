@@ -1,0 +1,31 @@
+# Firmware binari scaricati/estratti, non nostri: non versionare
+*.shex
+*.bin
+
+# Immagini compilate DEL PROGETTO (bootloader/app_tx/app_rx), tutte in
+# formato Intel HEX (.ihx, uniformato - non usiamo piu' l'estensione
+# .hex): versionate apposta in firmware/*/bin/ - chi clona il repo puo'
+# flashare subito senza dover ricompilare (vedi
+# firmware/tools/flash_firmware.py). Fuori da bin/ un *.ihx resta un
+# artefatto di build da rigenerare.
+*.ihx
+!firmware/*/bin/*.ihx
+
+# Artefatti di build SDCC (si rigenerano compilando da sorgente)
+*.rel
+*.lst
+*.rst
+*.map
+*.mem
+*.sym
+*.lk
+
+# Ambiente Python locale
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Editor
+.vscode/
+.idea/
