@@ -304,6 +304,49 @@ void usb_core_poll(void) {
         return;
     }
 
+    if ((bmRequestType & 0x60) == 0x20) {
+        /* Type = Class (HID). We only ever operate in Boot Protocol, so
+         * these are answered with fixed/no-op values - but they must be
+         * ACKed, not stalled: an OS HID driver tolerates a stall here,
+         * but several BIOS/UEFI legacy-keyboard USB drivers abandon the
+         * device entirely if SET_PROTOCOL/SET_IDLE fail (unlike the OS,
+         * they don't retry or fall back). */
+        if (bRequest == 0x0B) { /* SET_PROTOCOL - no data stage */
+            USBCS0 = USBCS0_CLR_OUTPKT_RDY | USBCS0_DATA_END;
+            return;
+        }
+        if (bRequest == 0x0A) { /* SET_IDLE - no data stage; rate ignored, reports are event-driven */
+            USBCS0 = USBCS0_CLR_OUTPKT_RDY | USBCS0_DATA_END;
+            return;
+        }
+        if (bRequest == 0x09) { /* SET_REPORT - has a data stage (e.g. keyboard LEDs), discarded */
+            uint8_t discard[8];
+            usb_ep0_recv(discard, sizeof(discard));
+            return;
+        }
+        if (bRequest == 0x03) { /* GET_PROTOCOL - boot protocol only, always 0 */
+            uint8_t proto = 0;
+            usb_ep0_send(&proto, 1);
+            return;
+        }
+        if (bRequest == 0x02) { /* GET_IDLE */
+            uint8_t idle = 0;
+            usb_ep0_send(&idle, 1);
+            return;
+        }
+        if (bRequest == 0x01) { /* GET_REPORT - no report cache kept, always all-zero */
+            uint8_t report[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+            uint8_t len = wLengthL;
+            if (len > sizeof(report)) {
+                len = sizeof(report);
+            }
+            usb_ep0_send(report, len);
+            return;
+        }
+        usb_ep0_stall();
+        return;
+    }
+
     /* minimal standard requests, same subset as the bootloader:
      * GET_DESCRIPTOR (0x06), SET_ADDRESS (0x05), SET_CONFIGURATION (0x09) */
     if (bRequest == 0x06) {

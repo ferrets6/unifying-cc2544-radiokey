@@ -71,7 +71,10 @@ void usb_core_init(void);
 uint8_t usb_core_last_reset_cause(void);
 
 /* Call continuously from main: polls EP0, feeds the emergency watchdog,
- * and dispatches vendor requests to usb_vendor_request(). */
+ * and dispatches vendor requests to usb_vendor_request(). Also answers
+ * the standard HID class requests (SET_PROTOCOL/SET_IDLE/SET_REPORT/
+ * GET_PROTOCOL/GET_IDLE/GET_REPORT) with fixed/no-op values, needed for
+ * BIOS/UEFI legacy USB keyboard support - see usb_core.c. */
 void usb_core_poll(void);
 
 /* Implemented by the app: handles its own vendor bRequests. Must
