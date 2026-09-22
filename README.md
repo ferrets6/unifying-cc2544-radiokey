@@ -9,8 +9,10 @@ receiving end.
 This is the transport layer, not a keyboard: the RX side already enumerates
 as a real HID keyboard, but the TX side has no physical key input yet -
 today a key press is only triggered via a USB vendor command sent from a
-script (see `firmware/tools/interactive_commands.py`). A future frontend
-(key capture/UI) is meant to sit on top of this and call it - see TODO.md.
+script (see `firmware/tools/interactive_commands.py`).
+[remote-kvm](https://github.com/ferrets6/remote-kvm) is that frontend: it
+drives this transport as one of several pluggable HID drivers behind a web
+page that also shows live video from the target machine.
 
 Not compatible with the real Logitech Unifying protocol - single fixed
 radio pipe, no encryption, no pairing. It reuses the same chip and the

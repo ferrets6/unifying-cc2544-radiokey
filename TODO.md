@@ -1,17 +1,5 @@
 # TODO
 
-## Real keyboard input on the TX side (High)
-
-This repo is a transport layer, not a keyboard: `app_rx` enumerates as a
-real USB HID keyboard, but `app_tx` has no physical key input - a key
-press only happens via a USB vendor command sent by hand
-(`firmware/tools/interactive_commands.py`, `SEND_KEY`).
-
-**To do**: something that takes "which key" as input and calls
-`SEND_KEY` over USB - at minimum a small Python script/daemon exposing
-this (e.g. one function call or a tiny local API), meant to be driven by
-a separate frontend project (key capture/UI) later. Design TBD.
-
 ## Spontaneous reboots into the bootloader (High)
 
 The dongle can end up in the bootloader on its own, no command sent. Not
