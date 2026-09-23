@@ -148,7 +148,12 @@ void usb_ep0_send(const uint8_t *data, uint8_t len) {
  * their first step). An OUT data phase must therefore explicitly
  * consume that leftover flag first, before waiting for the real
  * OUTPKT_RDY of the data phase, otherwise it reads the SETUP bytes
- * again. */
+ * again.
+ *
+ * Leaves the data phase's OUTPKT_RDY set: the transfer stays open (the
+ * host's status stage is NAKed) until the caller ends it with
+ * usb_ep0_ack() (success) or usb_ep0_stall() (failure) - so a handler
+ * can act on the data first and report the real outcome to the host. */
 uint8_t usb_ep0_recv(uint8_t *buf, uint8_t maxlen) {
     uint8_t cnt, i;
     USBINDEX = 0;
@@ -168,7 +173,6 @@ uint8_t usb_ep0_recv(uint8_t *buf, uint8_t maxlen) {
     for (; i < USBCNT0; i++) {
         (void)USBF0;
     }
-    USBCS0 = USBCS0_CLR_OUTPKT_RDY | USBCS0_DATA_END;
     return cnt;
 }
 
@@ -322,6 +326,7 @@ void usb_core_poll(void) {
         if (bRequest == 0x09) { /* SET_REPORT - has a data stage (e.g. keyboard LEDs), discarded */
             uint8_t discard[8];
             usb_ep0_recv(discard, sizeof(discard));
+            usb_ep0_ack();
             return;
         }
         if (bRequest == 0x03) { /* GET_PROTOCOL - boot protocol only, always 0 */

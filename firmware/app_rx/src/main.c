@@ -162,7 +162,14 @@ void main(void)
     while (1) {
         usb_core_poll();
         hid_poll();
-        if (radio_recv_poll(buf, RADIO_PKT_LEN)) {
+        /* Backpressure: while a HID report is still waiting for the host,
+         * don't read the radio. radio_recv_poll() is what re-arms the
+         * receive task, so an already-received packet just waits in the
+         * Rx FIFO and further packets get no hardware ack - the TX keeps
+         * retransmitting (radio_send()) until there's room here. Same
+         * idea as a blocking HID send on a wired keyboard gadget:
+         * reports are paced to the host's polling instead of dropped. */
+        if (!hid_busy() && radio_recv_poll(buf, RADIO_PKT_LEN)) {
             uint8_t i;
             for (i = 0; i < RADIO_PKT_LEN; i++) {
                 last_pkt[i] = buf[i];

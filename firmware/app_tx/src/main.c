@@ -83,7 +83,14 @@ void usb_vendor_request(uint8_t bRequest, uint8_t wValueL, uint8_t wValueH,
     if (bRequest == SEND_KEY) {
         /* wValueH = modifier, wValueL = keycode (HID usage), 1 OUT data
          * byte = down(1)/up(0). Same packet format as SEND_TEST_PACKET
-         * but with the real KEY_EVENT type - see app_rx/main.c. */
+         * but with the real KEY_EVENT type - see app_rx/main.c.
+         *
+         * The control transfer is only completed once the radio outcome
+         * is known: ack = RX got the packet, STALL = delivery failed
+         * (the host sees an error instead of a silent loss). This also
+         * makes SEND_KEY block while RX applies backpressure (withholds
+         * its ack, see app_rx/main.c), so a fast sender is paced to the
+         * RX host's actual consumption rate. */
         uint8_t pkt[RADIO_PKT_LEN];
         uint8_t downup;
         uint8_t s = seq++;
@@ -96,6 +103,11 @@ void usb_vendor_request(uint8_t bRequest, uint8_t wValueL, uint8_t wValueH,
         pkt[3] = downup;
         pkt[4] = s;
         last_send_ok = radio_send(pkt);
+        if (last_send_ok) {
+            usb_ep0_ack();
+        } else {
+            usb_ep0_stall();
+        }
         return;
     }
 

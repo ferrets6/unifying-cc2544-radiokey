@@ -87,7 +87,7 @@ void usb_vendor_request(uint8_t bRequest, uint8_t wValueL, uint8_t wValueH,
 /* Helpers for usb_vendor_request() handlers */
 void usb_ep0_ack(void);                                   /* OUT with no data, or immediate command ack */
 void usb_ep0_send(const uint8_t *data, uint8_t len);       /* IN phase, len <= wMaxPacketSize0 (32) */
-uint8_t usb_ep0_recv(uint8_t *buf, uint8_t maxlen);        /* OUT phase, single packet (<=32 bytes), returns bytes read */
+uint8_t usb_ep0_recv(uint8_t *buf, uint8_t maxlen);        /* OUT phase, single packet (<=32 bytes), returns bytes read; caller must then end the transfer with usb_ep0_ack() or usb_ep0_stall() */
 void usb_ep0_stall(void);
 
 #endif

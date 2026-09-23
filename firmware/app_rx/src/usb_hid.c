@@ -31,10 +31,12 @@
 #define USBCSIL_INPKT_RDY   0x01
 #define USBCSIL_PKT_PRESENT 0x02
 
-/* Dropping the report while the IN FIFO is still full would lose key-up
- * events that arrive within the host's polling window (bInterval=10ms)
- * - the host would then autorepeat the key forever. So the report is
- * queued (1 slot) and sent by hid_poll() at the first opportunity. */
+/* Each report is an event (one key down or up), so none may be dropped
+ * or reordered. While the IN FIFO still holds the previous report (the
+ * host only drains it every bInterval=10ms) the new one waits here, and
+ * hid_busy() stays true until hid_poll() hands it to the FIFO - the
+ * caller must not submit another report meanwhile (app_rx/main.c
+ * stops reading the radio instead, so backpressure reaches the TX). */
 static uint8_t pending_report[8];
 static uint8_t report_pending;
 
@@ -79,6 +81,11 @@ void hid_send_report(uint8_t modifier, uint8_t keycode)
         return;
     }
     hid_write_report(report);
+}
+
+uint8_t hid_busy(void)
+{
+    return report_pending;
 }
 
 void hid_poll(void)

@@ -16,10 +16,12 @@ void hid_init(void);
  * used here - one key at a time) and sends it on EP1 IN. keycode=0 = no
  * key (release report). Non-blocking: if the IN FIFO is still full (host
  * hasn't picked up the previous report), the report is queued (1 slot)
- * and sent by hid_poll() at the first opportunity. A second
- * hid_send_report() while one is already queued overwrites it (only the
- * most recent state is ever sent). */
+ * and sent by hid_poll() at the first opportunity. Must not be called
+ * while hid_busy() - the queued report would be lost. */
 void hid_send_report(uint8_t modifier, uint8_t keycode);
+
+/* 1 while a report is still queued waiting for the IN FIFO to free up. */
+uint8_t hid_busy(void);
 
 /* Call continuously from the main loop (alongside usb_core_poll()): if a
  * report is queued and the IN FIFO has freed up, sends it. */
