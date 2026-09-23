@@ -116,7 +116,9 @@ def write_and_verify(dev, hex_path):
     caller decides what to do next."""
     data = parse_ihx(hex_path)
     expected = bytes(data.get(a, 0xFF) for a in range(PAGE_LEN))
-    content_len = max(data) + 1
+    # whole 4-byte flash words only (nwords = wLength>>2, a trailing
+    # partial word would be silently dropped) - expected is 0xFF-padded
+    content_len = (max(data) | 3) + 1
     print(f"Image to write: {content_len} real bytes (rest of the page is 0xFF)", flush=True)
 
     try:

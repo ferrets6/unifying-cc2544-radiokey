@@ -147,9 +147,12 @@ def flash(dev, hex_path):
         print("ERROR: no bytes >= APP_BASE found in the file")
         return False
 
-    min_addr = min(data)
-    max_addr = max(data)
-    full = bytes(data.get(a, 0xFF) for a in range(min_addr, max_addr + 1))
+    # The bootloader writes whole 4-byte flash words (nwords = wLength>>2)
+    # and silently drops a trailing partial word - align both ends,
+    # padding with 0xFF (erased flash).
+    min_addr = min(data) & ~3
+    max_addr = max(data) | 3
+    full =bytes(data.get(a, 0xFF) for a in range(min_addr, max_addr + 1))
     pages = list(range(min_addr // PAGE_SIZE, max_addr // PAGE_SIZE + 1))
 
     try:
